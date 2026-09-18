@@ -51,5 +51,9 @@ docker-compose.override.yml
 # TypeScript
 *.tsbuildinfo
 
+# Google service account secrets
+apps/backend/ga4-credentials.json
+**/ga4-credentials*.json
+
 # Misc
 .cache/

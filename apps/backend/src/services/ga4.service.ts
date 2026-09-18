@@ -3,7 +3,6 @@ import { PageView } from '../models/PageView.model';
 import { IProject } from '../models/Project.model';
 import { logger } from '../config/logger';
 
-import path from 'path';
 import fs from 'fs';
 
 export interface ProjectVisitorStats {
@@ -21,12 +20,13 @@ export class GA4Service {
   private getClient() {
     if (this.gaClient) return this.gaClient;
     try {
-      const keyPath = path.resolve(__dirname, '../../ga4-credentials.json');
-      if (fs.existsSync(keyPath)) {
+      const configuredPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GA4_CREDENTIALS_PATH;
+      if (configuredPath && fs.existsSync(configuredPath)) {
         const { BetaAnalyticsDataClient } = require('@google-analytics/data');
-        this.gaClient = new BetaAnalyticsDataClient({ keyFilename: keyPath });
+        this.gaClient = new BetaAnalyticsDataClient({ keyFilename: configuredPath });
         return this.gaClient;
       }
+
       const rawKey = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || process.env.GA4_SERVICE_ACCOUNT_KEY;
       if (rawKey) {
         const { BetaAnalyticsDataClient } = require('@google-analytics/data');
