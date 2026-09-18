@@ -1,0 +1,123 @@
+version: '3.8'
+
+# ============================================================
+#  Master Dashboard — Development Stack
+#  All services are free & self-hosted (no cloud subscriptions)
+# ============================================================
+
+services:
+
+  # ── MongoDB 7 (Community Edition — FREE forever) ──────────
+  mongo:
+    image: mongo:7.0
+    container_name: masterdash-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE:      ${MONGO_INITDB_DATABASE:-masterdashboard}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - masterdash_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ── Redis 7 (Community Edition — FREE forever) ────────────
+  redis:
+    image: redis:7-alpine
+    container_name: masterdash-redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-changeme}
+    volumes:
+      - redis_data:/data
+    networks:
+      - masterdash_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Backend — Node.js + Express ───────────────────────────
+  backend:
+    build:
+      context: ./apps/backend
+      target: development
+    container_name: masterdash-backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Override URI inside Docker to use service names
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-root}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongo:27017/${MONGO_INITDB_DATABASE:-masterdashboard}?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+    volumes:
+      - ./apps/backend/src:/app/src:ro   # Hot-reload in dev
+    command: npm run dev
+    networks:
+      - masterdash_net
+    restart: unless-stopped
+
+  # ── Frontend — React + Vite dev server ────────────────────
+  frontend:
+    build:
+      context: ./apps/frontend
+      target: development
+    container_name: masterdash-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    environment:
+      VITE_API_URL: http://localhost:3001/api
+      VITE_SOCKET_URL: http://localhost:3001
+    volumes:
+      - ./apps/frontend/src:/app/src:ro
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - masterdash_net
+
+  # ── Nginx — Reverse proxy (FREE) ──────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: masterdash-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - masterdash_net
+    restart: unless-stopped
+
+networks:
+  masterdash_net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  mongo_config:
+  redis_data:
