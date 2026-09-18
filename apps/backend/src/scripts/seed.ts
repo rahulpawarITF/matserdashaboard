@@ -526,18 +526,18 @@ export const seed = async () => {
     logger.info('Connected to MongoDB for seeding');
 
     // 1. Create Default Owner Admin User
-    const existingUser = await User.findOne({ email: 'admin@masterdashboard.local' });
+    const existingUser = await User.findOne({ email: 'admin@masterdashboard.com' });
     if (!existingUser) {
       const passwordHash = await bcrypt.hash('Admin@1234', 10);
       await User.create({
-        email: 'admin@masterdashboard.local',
+        email: 'admin@masterdashboard.com',
         passwordHash,
         role: 'owner',
         isActive: true,
       });
-      logger.info('Owner user created: admin@masterdashboard.local');
+      logger.info('Owner user created: admin@masterdashboard.com');
     } else {
-      logger.info('Owner user already exists: admin@masterdashboard.local');
+      logger.info('Owner user already exists: admin@masterdashboard.com');
     }
 
     // 2. Seed / Upsert All 17 Projects
