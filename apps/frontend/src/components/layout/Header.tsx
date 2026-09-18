@@ -61,7 +61,7 @@ export default function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="flex flex-col gap-1">
-                <span className="truncate">{user?.email || 'admin@masterdashboard.local'}</span>
+                <span className="truncate">{user?.email || 'admin@masterdashboard.com'}</span>
                 <Badge variant="outline" className="w-fit capitalize text-[10px]">
                   {user?.role || 'owner'}
                 </Badge>

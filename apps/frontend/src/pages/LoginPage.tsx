@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@masterdashboard.local');
+  const [email, setEmail] = useState('admin@masterdashboard.com');
   const [password, setPassword] = useState('Admin@1234');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -78,7 +78,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@masterdashboard.local"
+              placeholder="admin@masterdashboard.com"
               required
               disabled={loading}
               autoFocus
@@ -109,12 +109,6 @@ export default function LoginPage() {
             )}
           </Button>
         </form>
-
-        <div className="mt-6 pt-4 border-t text-xs text-muted-foreground text-center">
-          <p className="font-medium text-foreground mb-1">Default credentials (from seed):</p>
-          <p>Email: <code className="bg-muted px-1 py-0.5 rounded">admin@masterdashboard.local</code></p>
-          <p className="mt-0.5">Password: <code className="bg-muted px-1 py-0.5 rounded">Admin@1234</code></p>
-        </div>
       </div>
     </div>
   );

@@ -118,6 +118,36 @@ The backend serves the compiled frontend from `apps/backend/public`, so the API 
 
 7. **Open the dashboard:** Visit `http://masterdashabord.itfuturz.in/`. API and Socket.IO requests use the same domain.
 
+### Seed the production database
+
+Run this before `npm prune --omit=dev` because the seed command uses `ts-node`:
+
+```bash
+cd apps/backend
+npm run seed
+```
+
+The seed creates the owner account `admin@masterdashboard.com`, seven projects, and the initial service. It does not drop the database. The initial password is `Admin@1234`; change it after the first login.
+
+### Deploy a later code update
+
+```bash
+git pull
+cd apps/frontend
+npm ci
+npm run build
+rm -rf ../backend/public
+cp -R dist ../backend/public
+
+cd ../backend
+npm ci
+npm run build
+npm run seed
+npm prune --omit=dev
+pm2 restart masterdashboard-backend --update-env
+pm2 save
+```
+
 ## Environment Variables
 
 | Variable | Description | Example | Required |
@@ -140,7 +170,7 @@ When running with `ENABLE_SWAGGER=true`, interactive API documentation is availa
 
 A default admin account is created upon seeding the database. **Ensure you change this immediately in production.**
 
-- **Email:** admin@masterdashboard.local
+- **Email:** admin@masterdashboard.com
 - **Password:** Admin@1234
 
 ## Testing

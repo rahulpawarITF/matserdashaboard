@@ -9,7 +9,7 @@ async function testSettingsAndSmtp() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: 'admin@masterdashboard.local',
+      email: 'admin@masterdashboard.com',
       password: 'Admin@1234',
     }),
   });

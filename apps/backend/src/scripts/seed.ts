@@ -207,11 +207,11 @@ const seed = async () => {
     logger.info('Connected to MongoDB for seeding');
 
     // 1. Create Owner User
-    const existingUser = await User.findOne({ email: 'admin@masterdashboard.local' });
+    const existingUser = await User.findOne({ email: 'admin@masterdashboard.com' });
     if (!existingUser) {
       const passwordHash = await bcrypt.hash('Admin@1234', 10);
       await User.create({
-        email: 'admin@masterdashboard.local',
+        email: 'admin@masterdashboard.com',
         passwordHash,
         role: 'owner',
         isActive: true,
