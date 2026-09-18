@@ -21,7 +21,7 @@ A complete MERN-stack administrative dashboard solution designed for scalability
 | Backend | Node.js, Express, TypeScript, Socket.io |
 | Database | MongoDB |
 | Cache & Pub/Sub | Redis |
-| Proxy & Static Files | Nginx |
+| Proxy & Static Files | Express |
 | Deployment | Docker, GitHub Actions |
 
 ## Prerequisites
@@ -81,19 +81,42 @@ To run the entire stack (including backend and frontend) via Docker Compose for 
 docker compose up --build
 ```
 
-## Production Deployment
+## Production Deployment Without Docker
 
-The production setup uses a separate configuration for optimized performance and security.
+The backend serves the compiled frontend from `apps/backend/public`, so the API and dashboard use the same domain.
 
-1. **Build the production images:**
+1. **Install prerequisites on the server:** Node.js 20+, Nginx, MongoDB, and Redis. MongoDB and Redis may also be hosted services.
+
+2. **Install dependencies and build the frontend:**
    ```bash
-   docker compose -f docker-compose.prod.yml build
+   cd apps/frontend
+   npm ci
+   npm run build
+   rm -rf ../backend/public
+   cp -R dist ../backend/public
    ```
 
-2. **Start the production stack:**
+3. **Build the backend:**
    ```bash
-   docker compose -f docker-compose.prod.yml up -d
+   cd ../backend
+   npm ci
+   npm run build
+   npm prune --omit=dev
    ```
+
+4. **Configure `.env`** with production values, including `NODE_ENV=production`, `PORT=3001`, the database URLs, and `CLIENT_URL=http://masterdashabord.itfuturz.in`.
+
+5. **Run the backend with a process manager:**
+   ```bash
+   sudo npm install -g pm2
+   pm2 start dist/index.js --name masterdashboard-backend
+   pm2 save
+   pm2 startup
+   ```
+
+6. **Configure Nginx** to use `nginx/default.conf` with `server_name masterdashabord.itfuturz.in`, then run `sudo nginx -t && sudo systemctl reload nginx`.
+
+7. **Open the dashboard:** Visit `http://masterdashabord.itfuturz.in/`. API and Socket.IO requests use the same domain.
 
 ## Environment Variables
 
@@ -147,9 +170,8 @@ Database backups are managed via shell scripts found in the `scripts/` directory
 
 ```mermaid
 graph TD
-    Client[Web Browser] -->|HTTP/WS| Nginx[Nginx Reverse Proxy]
-    Nginx -->|Static Assets| Frontend[Frontend Static Files]
-    Nginx -->|API & Socket| Backend[Backend Express App]
+   Client[Web Browser] -->|HTTP/WS| Backend[Backend Express App]
+   Backend -->|Static Assets| Frontend[Frontend Build in public]
     Backend -->|Read/Write| Mongo[(MongoDB)]
     Backend -->|Cache/PubSub| Redis[(Redis)]
 ```

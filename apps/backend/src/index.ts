@@ -1,4 +1,5 @@
 import http from 'http';
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -63,6 +64,18 @@ const startServer = async () => {
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/alerts', alertRoutes);
   app.use('/api/system', systemRoutes);
+
+  const frontendPath = path.resolve(__dirname, '../public');
+  app.use(express.static(frontendPath));
+  app.get('*', (req, res, next) => {
+    if (req.path === '/api' || req.path.startsWith('/api/') || req.path.startsWith('/socket.io/')) {
+      return next();
+    }
+
+    return res.sendFile(path.join(frontendPath, 'index.html'), (error) => {
+      if (error) next(error);
+    });
+  });
 
   app.use(errorHandler);
 

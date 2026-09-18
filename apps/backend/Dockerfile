@@ -1,26 +1,38 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Build frontend assets first so the backend can serve the complete application.
+FROM node:20-alpine AS frontend-builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
-COPY package*.json ./
+COPY apps/frontend/package*.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
-COPY src ./src
+COPY apps/frontend/ ./
+RUN npm run build
+
+# Build backend
+FROM node:20-alpine AS builder
+
+WORKDIR /app/backend
+
+COPY apps/backend/package*.json ./
+RUN npm ci
+
+COPY apps/backend/tsconfig.json ./
+COPY apps/backend/src ./src
 
 RUN npm run build
 
 # Production stage
 FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /app/backend
 
-COPY package*.json ./
+COPY apps/backend/package*.json ./
 RUN npm ci --only=production
 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./dist
+COPY --from=frontend-builder /app/frontend/dist ./public
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["npm", "start"]
